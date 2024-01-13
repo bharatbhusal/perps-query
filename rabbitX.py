@@ -19,7 +19,7 @@ def get_market_data():
 def parse_data(data):
     for i, each in enumerate(data):
         print(
-            f"{i+1}) pair: {each['id']}\t Fundain Rate: {each['instant_funding_rate']}"
+            f"{i+1}) pair: {each['id']}\t Fundaing Rate: {each['last_funding_rate_basis']}"
         )
 
 
