@@ -1,28 +1,29 @@
 import requests
 
-api_url = "https://api.prod.rabbitx.io/markets"
+API_URL = "https://api.prod.rabbitx.io/markets"
 
 
-def get_market_data():
+def send_request():
     try:
-        response = requests.get(api_url)
-        response.raise_for_status()  # Raise an exception for 4xx and 5xx status codes
-
-        data = response.json()
-        return data["result"]
-
+        response = requests.get(API_URL)
+        response.raise_for_status()
+        return response.json()["result"]
     except requests.exceptions.RequestException as e:
         print(f"Error: {e}")
         return None
 
 
 def parse_data(data):
-    for i, each in enumerate(data):
+    for i, market in enumerate(data):
+        pair_id = market["id"]
+        funding_rate = market["last_funding_rate_basis"]
         print(
-            f"{i+1}) pair: {each['id']}\t Fundaing Rate: {each['last_funding_rate_basis']}"
+            f"{i+1}) Pair: {pair_id}\t Funding Rate: {round(float(funding_rate)*100, 4)}%"
         )
 
 
 if __name__ == "__main__":
-    market_data = get_market_data()
-    parse_data(market_data)
+    market_data = send_request()
+
+    if market_data is not None:
+        parse_data(market_data)
