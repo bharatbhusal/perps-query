@@ -1,45 +1,42 @@
 import requests
 import json
-import time
-from datetime import datetime, timedelta
+
+api_url = "https://api.hyperliquid.xyz/info"
 
 
-class TimeConverter:
-    def __init__(self):
-        pass
+def get_market_data():
+    payload = {
+        "type": "metaAndAssetCtxs",
+    }
+    headers = {"Content-Type": "application/json"}
 
-    @staticmethod
-    def milliseconds_to_localtime(milliseconds):
-        seconds = milliseconds / 1000
-        utc_time = datetime.utcfromtimestamp(seconds)
-        local_time = utc_time.replace(tzinfo=None) + timedelta(seconds=time.timezone)
-        return local_time
+    try:
+        response = requests.post(api_url, data=json.dumps(payload), headers=headers)
+        response.raise_for_status()  # Raise an exception for 4xx and 5xx status codes
 
-    @staticmethod
-    def localtime_to_milliseconds(local_time):
-        utc_time = local_time - timedelta(seconds=time.timezone)
-        milliseconds = int((utc_time - datetime(1970, 1, 1)).total_seconds() * 1000)
-        return milliseconds
+        data = response.json()
 
-    @staticmethod
-    def current_time_to_milliseconds():
-        current_time_seconds = time.time()
-        return int(current_time_seconds * 1000)
+        tokens = data[0]["universe"]
+        token_details = data[1]
+        funding_rate = [
+            round(float(each["funding"]) * 100, 4) for each in token_details
+        ]
+        token_name = [each["name"] for each in tokens]
+        details = list(zip(token_name, funding_rate))
+        return details
+
+    except requests.exceptions.RequestException as e:
+        print(f"Error: {e}")
+        return None
 
 
-converter = TimeConverter()
+def parse_data(data):
+    for i, (token_name, funding_rate) in enumerate(data):
+        print(f"{i+1}) Token Name: {token_name}\t Funding Rate: {funding_rate}%")
 
-url = "https://api.hyperliquid.xyz/info"
-payload = {
-    "type": "fundingHistory",
-    "coin": "TIA",
-    "startTime": converter.current_time_to_milliseconds() - (60 * 60 * 1000),
-}
-headers = {"Content-Type": "application/json"}
-res = requests.post(url, data=json.dumps(payload), headers=headers)
-data = res.json()
 
-for i, each in enumerate(reversed(data)):
-    print(
-        f"--{converter.milliseconds_to_localtime(each['time'])}--\nCoin: {each['coin']}\nFunding Rate: {round(float(each['fundingRate'])*100, 4)}\nPremium: {each['premium']}\n\n"
-    )
+if __name__ == "__main__":
+    market_data = get_market_data()
+
+    if market_data is not None:
+        parse_data(market_data)

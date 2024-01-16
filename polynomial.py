@@ -7,7 +7,6 @@ def get_market_data():
     try:
         response = requests.get(api_url)
         response.raise_for_status()  # Raise an exception for 4xx and 5xx status codes
-
         return response.json()
 
     except requests.exceptions.RequestException as e:
